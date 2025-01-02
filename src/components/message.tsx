@@ -8,13 +8,13 @@ interface MessageProps {
 const Message = ({ message, role }: MessageProps) => {
   return (
     <div className={cn("flex items-end", { "justify-end": role === "user" })}>
-      <div className="order-2 mx-2 flex max-w-xs flex-col items-start space-y-2 text-xs">
+      <div className="order-2 mx-2 flex flex-col items-start space-y-2 text-xs">
         <div>
           <span
             className={cn({
-              "inline-block rounded-lg rounded-bl-none bg-gray-300 px-4 py-2 text-gray-600":
+              "inline-block rounded-lg rounded-bl-none bg-gray-300 px-4 py-2 text-gray-600 max-w-xs":
                 role === "assistant",
-              "px-4 py-2 rounded-lg inline-block rounded-br-none bg-blue-600 text-white":
+              "px-4 py-2 rounded-lg inline-block rounded-br-none bg-blue-600 text-white max-w-xs":
                 role === "user",
             })}
           >

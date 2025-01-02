@@ -8,10 +8,10 @@ const NavBar = () => {
     <>
       <div className="container flex flex-row  items-center justify-between  py-2">
         <h2 className="flex flex-row space-x-4 truncate text-lg font-semibold">
-          Ask Lucas
+          Ask Daniel
         </h2>
         <div className="flex items-center justify-end space-x-2">
-          <Link href="https://github.com/aranlucas/resume-chat">
+          <Link href="https://github.com/doreilly257/chatcv">
             <Icon name="github" className="ml-2 h-6 w-6" />
           </Link>
 

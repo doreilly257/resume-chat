@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChat } from "ai/react";
 import { useRef } from "react";
+import CVPreview from "@/components/cv-preview";
 
 export default function Home() {
   const {
@@ -27,12 +28,10 @@ export default function Home() {
             <div className="mx-auto max-w-2xl px-4">
               <div className="rounded-lg border bg-background p-8">
                 <h1 className="mb-2 text-lg font-semibold">
-                  Welcome to my Resume ChatBot
+                  Welcome to ChatCV for Daniel O'Reilly
                 </h1>
                 <p className="mb-2 leading-normal text-muted-foreground">
-                  This chatbot will answer any questions you may have about
-                  resume. Working on building a question bank to answer more
-                  leadership answers
+                  This chatbot will answer any questions you may have about my CV.
                 </p>
                 <p className="mb-2 leading-normal text-muted-foreground">
                   You can try asking any of the following questions:
@@ -40,32 +39,33 @@ export default function Home() {
                 <div className="mt-4 flex flex-col items-start space-y-2">
                   <button
                     onClick={() => {
-                      setInput("Where has Lucas worked?");
+                      setInput("Where has Daniel worked?");
                     }}
                     className="inline-flex h-auto items-center justify-center rounded-md p-0 text-base font-medium text-primary underline-offset-4 shadow-none ring-offset-background transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                   >
                     <Icon name="arrow-right" className="mr-2 h-4 w-4 text-muted-foreground" />
-                    Where has Lucas worked?
+                    Where has Daniel worked?
                   </button>
                   <button
                     onClick={() => {
-                      setInput("What skills does Lucas have?");
+                      setInput("What skills does Daniel have?");
                     }}
                     className="inline-flex h-auto items-center justify-center rounded-md p-0 text-base font-medium text-primary underline-offset-4 shadow-none ring-offset-background transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                   >
                     <Icon name="arrow-right" className="mr-2 h-4 w-4 text-muted-foreground" />
-                    What skills does Lucas have?
+                    What skills does Daniel have?
                   </button>
                   <button
                     onClick={() => {
-                      setInput("Who is Lucas?");
+                      setInput("Who is Daniel?");
                     }}
                     className="inline-flex h-auto items-center justify-center rounded-md p-0 text-base font-medium text-primary underline-offset-4 shadow-none ring-offset-background transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                   >
                     <Icon name="arrow-right" className="mr-2 h-4 w-4 text-muted-foreground" />
-                    Who is Lucas?
+                    Who is Daniel?
                   </button>
                 </div>
+                <CVPreview />
               </div>
             </div>
           </div>
@@ -73,11 +73,13 @@ export default function Home() {
       ) : (
         <div
           id="messages"
-          className="flex grow flex-col space-y-4 overflow-y-scroll p-3"
+          className="flex grow flex-col overflow-y-scroll pt-4 md:pt-10"
         >
-          {messages.map((m, i) => {
-            return <Message message={m.content} role={m.role} key={i} />;
-          })}
+          <div className="mx-auto max-w-2xl px-4 space-y-4">
+            {messages.map((m, i) => {
+              return <Message message={m.content} role={m.role} key={i} />;
+            })}
+          </div>
         </div>
       )}
       <div className="mb-2 border-t-2 px-4 pt-4">

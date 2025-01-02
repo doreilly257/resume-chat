@@ -1,11 +1,7 @@
-import PineconeClient from "@/lib/pinecone";
 import { LangChainStream, StreamingTextResponse } from "ai";
-import { ConversationalRetrievalQAChain } from "langchain/chains";
-import { ChatOpenAI } from "langchain/chat_models/openai";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { AIMessage, HumanMessage, SystemMessage } from "langchain/schema";
-import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { z } from "zod";
+import { MeiliSearch } from "meilisearch";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // { messages: [ { role: 'user', content: 'hi' } ] }
 const ChatSchema = z.object({
@@ -26,66 +22,70 @@ export async function POST(req: Request) {
 
   try {
     const { messages } = ChatSchema.parse(body);
-    const pinecone = await PineconeClient();
-
-    const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX_NAME!);
-
-    const vectorStore = await PineconeStore.fromExistingIndex(
-      new OpenAIEmbeddings(),
-      { pineconeIndex }
-    );
-
-    const pastMessages = messages.map((m) => {
-      if (m.role === "user") {
-        return new HumanMessage(m.content);
-      }
-      if (m.role === "system") {
-        return new SystemMessage(m.content);
-      }
-      return new AIMessage(m.content);
+    
+    // Initialize Meilisearch client
+    const client = new MeiliSearch({
+      host: process.env.MEILISEARCH_HOST!,
+      apiKey: process.env.MEILISEARCH_API_KEY!,
     });
 
-    const { stream, handlers } = LangChainStream();
+    const index = client.index(process.env.MEILISEARCH_INDEX_NAME!);
 
-    const model = new ChatOpenAI({
-      temperature: 1,
-      streaming: true,
+    // Get the last user message
+    const lastMessage = messages[messages.length - 1].content;
+
+    // Search for relevant documents
+    const searchResults = await index.search(lastMessage, {
+      limit: 5,
     });
 
-    const questionModel = new ChatOpenAI({
-      temperature: 1,
+    // Initialize Gemini
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-2.0" });
+
+    // Format context from search results
+    const context = searchResults.hits
+      .map((hit) => hit.content)
+      .join("\n\n");
+
+    // Format conversation history
+    const conversationHistory = messages
+      .slice(0, -1)
+      .map((m) => `${m.role}: ${m.content}`)
+      .join("\n");
+
+    // Create prompt with context and history
+    const prompt = `
+Context from CV:
+${context}
+
+Conversation history:
+${conversationHistory}
+
+User question: ${lastMessage}
+
+Please provide a helpful response based on the CV context above.`;
+
+    // Get streaming response from Gemini
+    const result = await model.generateContentStream(prompt);
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of result.stream) {
+          controller.enqueue(chunk.text());
+        }
+        controller.close();
+      },
     });
-
-    const chain = ConversationalRetrievalQAChain.fromLLM(
-      model,
-      vectorStore.asRetriever(),
-      {
-        questionGeneratorChainOptions: {
-          llm: questionModel,
-        },
-      }
-    );
-
-    const question = messages[messages.length - 1].content;
-
-    chain
-      .call(
-        {
-          verbose: true,
-          question,
-          chat_history: pastMessages,
-        },
-        [handlers]
-      )
-      .catch(console.error);
 
     return new StreamingTextResponse(stream);
   } catch (error) {
-    console.error(error);
+    console.error("Error in chat route:", error);
     if (error instanceof z.ZodError) {
       return new Response(JSON.stringify(error.issues), { status: 422 });
     }
 
-    return new Response(null, { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+    });
   }
 }
